@@ -1,0 +1,7 @@
+{
+  "name": "kisa-ki-di",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
