@@ -3,24 +3,61 @@
     <ion-menu contentId="main-content" type="overlay">
       <ion-content>
         <ion-list id="inbox-list">
-          <ion-list-header>Inbox</ion-list-header>
-          <ion-note>hi@ionicframework.com</ion-note>
+          <ion-list-header>
+              <ion-label>{{nonProje}}</ion-label>
+              <ion-menu-toggle>
+                  <ion-button shape="round" color="primary" fill="solid" (click)="logOut()" >
+                      <span>
+                        Soti
+                      </span>
+                      <ion-icon name="exit" style="margin-left: 2px"></ion-icon>
+                  </ion-button>
+              </ion-menu-toggle>
+          </ion-list-header>
+          <ion-note>Chwazi youn nan chapit yo</ion-note>
 
-          <ion-menu-toggle auto-hide="false" *ngFor="let p of appPages; let i = index">
-            <ion-item (click)="selectedIndex = i" routerDirection="root" [routerLink]="[p.url]" lines="none" detail="false" [class.selected]="selectedIndex == i">
-              <ion-icon slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'"></ion-icon>
-              <ion-label>{{ p.title }}</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-        </ion-list>
+            <div *ngIf="livYoAsync | async as livYo; else loadingLiv">
+              <div *ngFor="let liv of livYo;">
+                <ion-item
+                          (click)="montreChapit(liv)"
+                          [ngClass]="{active: livKiOuve === liv}">
+                  <ion-icon slot="start" ios="reader-outline" md="reader-sharp"></ion-icon>
+    <!--              <i class="icon" ng-class="isGroupShown(group) ? 'ion-minus' : 'ion-plus'"></i>-->
+                  &nbsp;
+                  {{ liv }}
+                </ion-item>
+                <ion-menu-toggle>
+                    <div *ngIf="livKiOuve === liv && (chapitYoAsync | async) as chapitYo; else loadingChapit">
+                        <ion-item *ngFor="let chapit of chapitYo" class="item-accordion"
+                                  [hidden]="livKiOuve !== liv" (click)="chapitKiOuve = chapit"
+                                  routerDirection="root" [routerLink]="'folder/'+ liv + '/' + chapit"
+                                  [class.selected]="chapitKiOuve === chapit" lines="none" detail="false">
+          <!--              <ion-icon slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'"></ion-icon>-->
+                        <ion-label>Chapit {{ chapit }}</ion-label>
+                      </ion-item>
+                    </div>
+                    <ng-template #loadingChapit>
+                        <div *ngFor="let chapit of [1,2,3,4,5,6];">
+                            <ion-item [hidden]="livKiOuve !== liv" class="item-accordion" lines="none" detail="false">
+                                <ion-label>
+                                    <ion-skeleton-text animated style="width: 20%"></ion-skeleton-text>
+                                </ion-label>
+                            </ion-item>
+                        </div>
+                    </ng-template>
+                </ion-menu-toggle>
+              </div>
+            </div>
+            <ng-template #loadingLiv>
+                <div *ngFor="let liv of [1,2,3,4,5,6];">
+                    <ion-item>
+                        <ion-icon slot="start" ios="reader-outline" md="reader-sharp"></ion-icon>
+                        &nbsp;
+                        <ion-skeleton-text animated style="width: 20%"></ion-skeleton-text>
+                    </ion-item>
+                </div>
+            </ng-template>
 
-        <ion-list id="labels-list">
-          <ion-list-header>Labels</ion-list-header>
-
-          <ion-item *ngFor="let label of labels" lines="none">
-            <ion-icon slot="start" ios="bookmark-outline" md="bookmark-sharp"></ion-icon>
-            <ion-label>{{ label }}</ion-label>
-          </ion-item>
         </ion-list>
       </ion-content>
     </ion-menu>

@@ -3,19 +3,146 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>{{ folder }}</ion-title>
+    <ion-title>{{ liv }} {{ chapit }}</ion-title>
+    <ion-select *ngIf="kisaKiDiService.admin" placeholder="Itilizatè" [mode]="kisaKiDiService.selectedUid" [compareWith]="compareWithFn" (ionChange)="changeUser()">
+      <ion-select-option *ngFor="let user of (usersAsync | async);" [value]="user.uid">{{user.name}}</ion-select-option>
+    </ion-select>
+    <ion-button *ngIf="canSave()" (click)="anrejistre()" slot="end" color="success" shape="round">
+      <span>
+        Anrejistre
+      </span>
+      <ion-icon name="save" style="padding-left: 2px;"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">{{ folder }}</ion-title>
+      <ion-title size="large center">{{ liv }} {{ chapit }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <div id="container">
-    <strong class="capitalize">{{ folder }}</strong>
-    <p>Explore <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+  <div class="waveform" #waveform>
+    <div *ngIf="!ready;">
+      <ion-skeleton-text animated style="width: 100%; height: 100%; position: absolute;"></ion-skeleton-text>
+    </div>
+    <div *ngFor="let wave of waves; let i = index;" class="highlighter" [ngStyle]="highlighterStyle(wave)" (click)="waveOptions(i)"></div>
+    <ion-icon *ngIf="waves.length > 0" name="add-circle" color="primary" class="add-button" [ngStyle]="buttonStylePosition()" (click)="markWave()" #addButton></ion-icon>
   </div>
+
+  <ion-item style="height: 0.5rem"></ion-item>
+
+  <div class="footer">
+
+    <div style="display: flex; flex-direction: column; height: calc(100vh - 17vh - 13rem);">
+      <ion-list style="overflow-y: scroll;max-height: 100%; margin-top: 0;">
+        <div *ngIf="veseYoAsync | async as veseYo; else loadingvese">
+          <ion-item *ngFor="let vese of (veseYo | keyvalue: asIsOrder); let i = index;" #waveText>
+            <ion-card class="text-card" [color]="cardColor(i)" [ngStyle]="cardStyle(i)" >
+              <ion-card-header style="padding-bottom: 0">
+                <ion-card-title>
+                  <span>
+                    {{ vese.key }}
+                  </span>
+                  <ion-button *ngIf="marked(i) && playingIndexCard !== i" (click)="playCard(i)"
+                              [color]="cardPlayColor(i)" shape="round" fill="outline"
+                              style="top: -0.3rem; position: relative;">
+                    <ion-icon name="play"></ion-icon>
+                  </ion-button>
+                  <ion-button *ngIf="marked(i) && playingIndexCard === i" (click)="stop()"
+                              [color]="cardPlayColor(i)" shape="round" fill="outline"
+                              style="top: -0.3rem; position: relative;">
+                    <ion-icon name="stop"></ion-icon>
+                  </ion-button>
+                </ion-card-title>
+              </ion-card-header>
+              <ion-card-content style="padding: 3rem">
+                <ion-fab *ngIf="marked(i)" vertical="top" horizontal="end" slot="fixed" class="edit-fab" #waveOptions>
+                  <ion-fab-button [disabled]="playingCard || accepted(i)" class="smaller-fab" size="small" color="light">
+                    <ion-icon name="options"></ion-icon>
+                  </ion-fab-button>
+                  <ion-fab-list class="smaller-fab-list">
+                    <ion-fab-button class="smaller-fab" color="tertiary" (click)="removeWave(i)">
+                      <ion-icon name="trash"></ion-icon>
+                    </ion-fab-button>
+                    <ion-fab-button *ngIf="kisaKiDiService.token" class="smaller-fab" color="danger" (click)="reject(i)">
+                      <ion-icon name="close-circle"></ion-icon>
+                    </ion-fab-button>
+                    <ion-fab-button *ngIf="kisaKiDiService.token" class="smaller-fab" color="success" (click)="accept(i)">
+                      <ion-icon name="checkmark-circle"></ion-icon>
+                    </ion-fab-button>
+                  </ion-fab-list>
+                </ion-fab>
+                <div>
+                  {{ vese.value }}
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-item>
+        </div>
+        <ng-template #loadingvese>
+          <div *ngFor="let vese of [1,2,3,4,5,6];">
+            <ion-item>
+              <ion-card>
+                <ion-card-header style="padding-bottom: 0">
+                  <ion-card-title>
+                    <ion-skeleton-text animated style="width: 20vw"></ion-skeleton-text>
+                  </ion-card-title>
+                </ion-card-header>
+                <ion-card-content style="padding: 3rem">
+                  <div>
+                    <ion-skeleton-text animated style="width: 60vw"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 60vw"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 60vw"></ion-skeleton-text>
+                  </div>
+                </ion-card-content>
+              </ion-card>
+            </ion-item>
+          </div>
+        </ng-template>
+      </ion-list>
+    </div>
+  </div>
+  <ion-footer>
+    <ion-item style="height: 0" color="ion-color-medium" class="center">
+      <ion-label color="io">
+<!--        <h2>Idantifye Vese yo</h2>-->
+        <br>
+        <br>
+        <br>
+      </ion-label>
+
+    </ion-item>
+    <div class="center">
+      <ion-grid>
+        <ion-row>
+          <ion-col>
+            <ion-button [disabled]="playingCard" color="primary">
+              <ion-icon name="play-skip-back" (click)="prev()"></ion-icon>
+            </ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button [disabled]="playingCard" *ngIf="ready && paused" (click)="playPause()" color="primary">
+              <ion-icon name="play"></ion-icon>
+            </ion-button>
+            <ion-button [disabled]="playingCard" *ngIf="ready &&  !paused" (click)="playPause()" color="primary">
+              <ion-icon name="pause"></ion-icon>
+            </ion-button>
+          </ion-col>
+          <ion-col *ngIf="ready && progress !== 0" >
+            <ion-button [disabled]="playingCard" (click)="stop()" color="primary">
+              <ion-icon name="stop"></ion-icon>
+            </ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button [disabled]="playingCard" (click)="next()" color="primary">
+              <ion-icon name="play-skip-forward"></ion-icon>
+            </ion-button>
+          </ion-col>
+        </ion-row>
+
+      </ion-grid>
+    </div>
+  </ion-footer>
 </ion-content>

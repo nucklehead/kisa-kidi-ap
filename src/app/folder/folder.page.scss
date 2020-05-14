@@ -26,3 +26,68 @@ ion-menu-button {
 #container a {
   text-decoration: none;
 }
+
+.center{
+  text-align: center;
+}
+
+ion-range.music-slider {
+  --knob-background: no-repeat center/100% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Ctitle%3Eionicons-v5-a%3C/title%3E%3Cpath d='M256,48C141.31,48,48,141.31,48,256s93.31,208,208,208,208-93.31,208-208S370.69,48,256,48Zm80,224H272v64a16,16,0,0,1-32,0V272H176a16,16,0,0,1,0-32h64V176a16,16,0,0,1,32,0v64h64a16,16,0,0,1,0,32Z'/%3E%3C/svg%3E");
+  --knob-size: 45px;
+}
+
+ion-range.music-pointer {
+  --knob-size: 20rem;
+  --knob-border-radius: 0;
+  position: absolute;
+  left: 1em;
+  top: 1em;
+}
+
+
+.footer{
+  background-color: var(--ion-color-light-tint);
+
+}
+
+.highlighter {
+  height: 16vh;
+  position: absolute;
+  background-color: rgba(rgb(255, 63, 98), 0.3);
+  border-right-style: solid;
+  border-right-color: black;
+  z-index: 200;
+}
+
+.add-button {
+  position: absolute;
+  font-size: 3rem;
+  top: 90%;
+  z-index: 201;
+}
+
+.waveform {
+  height: 17vh;
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+  position: relative;
+}
+
+.edit-fab {
+  top: -2.5rem
+}
+
+.smaller-fab{
+  width: 2rem;
+  height: 2rem;
+}
+
+.smaller-fab-list{
+  margin: 3rem 0;
+  padding-right: .5rem;
+}
+
+.text-card{
+  width: 100%;
+  min-height: 11rem;
+}

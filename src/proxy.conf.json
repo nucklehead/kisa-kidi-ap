@@ -1,0 +1,14 @@
+
+{
+  "/mp3/*": {
+    "target": "https://www.soundhelix.com/examples/mp3",
+    "changeOrigin": true,
+    "secure": false,
+    "pathRewrite": {"^/mp3" : ""}
+  },
+  "/api/*": {
+    "target": "http://10.42.0.199:8080",
+    "changeOrigin": true,
+    "secure": false
+  }
+}
