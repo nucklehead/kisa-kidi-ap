@@ -4,7 +4,7 @@
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
     <ion-title>{{ liv }} {{ chapit }}</ion-title>
-    <ion-select *ngIf="kisaKiDiService.admin" placeholder="Itilizatè" [mode]="kisaKiDiService.selectedUid" [compareWith]="compareWithFn" (ionChange)="changeUser()">
+    <ion-select *ngIf="kisaKiDiService.admin" placeholder="Itilizatè" [(ngModel)]="kisaKiDiService.selectedUid" (ionChange)="loadWaves()">
       <ion-select-option *ngFor="let user of (usersAsync | async);" [value]="user.uid">{{user.name}}</ion-select-option>
     </ion-select>
     <ion-button *ngIf="canSave()" (click)="anrejistre()" slot="end" color="success" shape="round">
@@ -20,6 +20,9 @@
   <ion-header collapse="condense">
     <ion-toolbar>
       <ion-title size="large center">{{ liv }} {{ chapit }}</ion-title>
+      <ion-button *ngIf="kisaKiDiService.admin" size="small" color="success" slot="end" (click)="acceptAll()">
+        <ion-icon name="checkmark-circle"></ion-icon>
+      </ion-button>
     </ion-toolbar>
   </ion-header>
 
@@ -66,10 +69,10 @@
                     <ion-fab-button class="smaller-fab" color="tertiary" (click)="removeWave(i)">
                       <ion-icon name="trash"></ion-icon>
                     </ion-fab-button>
-                    <ion-fab-button *ngIf="kisaKiDiService.token" class="smaller-fab" color="danger" (click)="reject(i)">
+                    <ion-fab-button *ngIf="kisaKiDiService.admin" class="smaller-fab" color="danger" (click)="reject(i)">
                       <ion-icon name="close-circle"></ion-icon>
                     </ion-fab-button>
-                    <ion-fab-button *ngIf="kisaKiDiService.token" class="smaller-fab" color="success" (click)="accept(i)">
+                    <ion-fab-button *ngIf="kisaKiDiService.admin" class="smaller-fab" color="success" (click)="accept(i)">
                       <ion-icon name="checkmark-circle"></ion-icon>
                     </ion-fab-button>
                   </ion-fab-list>

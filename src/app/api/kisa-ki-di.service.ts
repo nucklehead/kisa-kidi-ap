@@ -120,6 +120,7 @@ export class KisaKiDiService {
           this.antre(user).subscribe((kont: any) => {
             this.token = kont.token;
             this.admin = kont.admin;
+            this.selectedUid = kont.token;
             this.navCtrl.navigateRoot('/');
           });
         }).catch((error) => {

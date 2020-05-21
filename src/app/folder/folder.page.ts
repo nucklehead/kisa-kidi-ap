@@ -262,6 +262,15 @@ export class FolderPage implements OnInit, AfterViewInit {
     });
   }
 
+  acceptAll() {
+    this.waves.filter(wave => wave.marked).forEach(wave => {
+      wave.accepted = true;
+      wave.rejected = false;
+    });
+    this.waveOptionsView.forEach((ionFab) => ionFab.close);
+    this.cd.detectChanges();
+  }
+
   accepted(index: number) {
     return this.waves[index].accepted;
   }
@@ -355,10 +364,5 @@ export class FolderPage implements OnInit, AfterViewInit {
 
   compareWithFn = (user1, user2) => {
     return user1 && user2 ? user1.id === user2.id : user1 === user2;
-  }
-
-  changeUser() {
-    this.veseYoAsync = this.kisaKiDiService.vese(this.liv, this.chapit);
-    this.cd.detectChanges();
   }
 }
