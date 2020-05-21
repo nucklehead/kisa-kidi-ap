@@ -19,7 +19,7 @@ import {NouvoFonksyonService} from '../fonksyon/nouvo-fonksyon.service';
   providedIn: 'root'
 })
 export class KisaKiDiService {
-  url = '';
+  url = 'https://kisa-ki-di-nrwbx72kza-ue.a.run.app';
   token: string;
   selectedUid: string;
   admin: boolean;
