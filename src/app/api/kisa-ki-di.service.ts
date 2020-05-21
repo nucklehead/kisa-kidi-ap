@@ -139,8 +139,8 @@ export class KisaKiDiService {
         .then((user) => {
           this.antre(user).subscribe((kont: any) => {
             this.token = kont.token;
-            // this.admin = kont.admin;
-            this.admin = false;
+            this.admin = kont.admin;
+            // this.admin = false;
             this.selectedUid = kont.token;
             this.showNewFeatures(kont);
           });
