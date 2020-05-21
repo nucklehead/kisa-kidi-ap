@@ -1,25 +1,37 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
-import {throwError} from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import {retry, catchError} from 'rxjs/operators';
-import {NavController, ToastController} from '@ionic/angular';
+import {ModalController, NavController, ToastController} from '@ionic/angular';
 import {auth} from 'firebase';
 import 'firebase/auth';
 import { AngularFireAuth } from '@angular/fire/auth';
+import { Plugins } from '@capacitor/core';
+const { CapacitorDataStorageSqlite, Device } = Plugins;
+
+import * as CDSSPlugin from 'capacitor-data-storage-sqlite';
+import {NouvoFonksyonComponent} from '../modal/nouvo-fonksyon/nouvo-fonksyon.component';
+import {NouvoFonksyonService} from '../fonksyon/nouvo-fonksyon.service';
+
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class KisaKiDiService {
-  url = 'https://kisa-ki-di-nrwbx72kza-ue.a.run.app';
+  url = '';
   token: string;
   selectedUid: string;
   admin: boolean;
+  storage: any;
+
   constructor(
       private http: HttpClient,
       public toastController: ToastController,
       private ngFireAuth: AngularFireAuth,
       public navCtrl: NavController,
+      public modalController: ModalController,
+      public nouvoFonksyonService: NouvoFonksyonService,
   ) { }
 
   async presentToast(message) {
@@ -27,7 +39,7 @@ export class KisaKiDiService {
       message,
       duration: 4000
     });
-    toast.present();
+    await toast.present();
   }
 
   // Handle API errors
@@ -109,6 +121,14 @@ export class KisaKiDiService {
         );
   }
 
+  makeFonksyon(date: number) {
+    return this.http.post(`${this.url}/api/kont/${this.token}`, {date})
+        .pipe(
+            retry(3),
+            catchError(this.handleError(this))
+        );
+  }
+
   authenticate() {
     this.AuthLogin(new auth.GoogleAuthProvider());
   }
@@ -119,13 +139,59 @@ export class KisaKiDiService {
         .then((user) => {
           this.antre(user).subscribe((kont: any) => {
             this.token = kont.token;
-            this.admin = kont.admin;
+            // this.admin = kont.admin;
+            this.admin = false;
             this.selectedUid = kont.token;
-            this.navCtrl.navigateRoot('/');
+            this.showNewFeatures(kont);
           });
         }).catch((error) => {
           this.presentToast('Nou pat ka idntifye w.');
           this.navCtrl.navigateRoot('/login');
         });
+  }
+
+  async showNewFeatures(kont: any) {
+    const modal = await this.modalController.create({
+      component: NouvoFonksyonComponent,
+      componentProps: kont,
+    });
+    if (this.nouvoFonksyonService.getUsersFeature(kont).length > 0) {
+      return await modal.present();
+    } else {
+      await this.navCtrl.navigateRoot('/');
+    }
+  }
+
+//  Storage related methods. Move to its own service
+
+  async initStorage() {
+    const info =  await Device.getInfo();
+    if (info.platform === 'ios' || info.platform === 'android') {
+      this.storage = CapacitorDataStorageSqlite;
+    } else if (info.platform === 'electron') {
+      this.storage = CDSSPlugin.CapacitorDataStorageSqliteElectron;
+    } else {
+      this.storage = CDSSPlugin.CapacitorDataStorageSqlite;
+    }
+    const resOpen = await this.storage.openStore({});
+    if (resOpen) {
+      console.log('Storage is open');
+    }
+  }
+
+  async setInStorage(liv, chapit, waves) {
+    await this.storage.set({
+      key: `${liv}-${chapit}`,
+      value: JSON.stringify(waves)
+    });
+  }
+
+  async getFromStorage(liv, chapit) {
+    const ret = await this.storage.get({ key: `${liv}-${chapit}` });
+    return JSON.parse(ret.value);
+  }
+
+  async removeFromStorage(liv, chapit) {
+    await this.storage.remove({ key: `${liv}-${chapit}` });
   }
 }

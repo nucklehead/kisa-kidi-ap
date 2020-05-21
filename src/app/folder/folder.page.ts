@@ -3,9 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import WaveSurfer from 'wavesurfer.js';
 import {KisaKiDiService} from '../api/kisa-ki-di.service';
 import {Observable} from 'rxjs';
-import {IonFab, NavController} from '@ionic/angular';
+import {IonFab, ModalController, NavController} from '@ionic/angular';
 import {AngularFireAuth} from '@angular/fire/auth';
 import {User} from 'firebase';
+import { createGesture, Gesture, GestureDetail } from '@ionic/core';
+import {NouvoFonksyonComponent} from '../modal/nouvo-fonksyon/nouvo-fonksyon.component';
+import {NouvoFonksyonService} from '../fonksyon/nouvo-fonksyon.service';
 
 @Component({
   selector: 'app-folder',
@@ -18,11 +21,13 @@ export class FolderPage implements OnInit, AfterViewInit {
 
   url = '';
   progress = 0;
+  dragTimeStart = 0;
   duration = 0;
   ready = false;
   paused = true;
   playingCard = false;
   playingIndexCard = -1;
+  canMark = true;
 
   waves = [];
   currentWave = this.waves[0];
@@ -34,6 +39,7 @@ export class FolderPage implements OnInit, AfterViewInit {
   waveSurfer: WaveSurfer;
   veseYoAsync: Observable<any>;
   usersAsync: Observable<any>;
+  kont: any;
 
   constructor(
       private activatedRoute: ActivatedRoute,
@@ -70,6 +76,12 @@ export class FolderPage implements OnInit, AfterViewInit {
         return this.ngAfterViewInit();
       }
 
+      this.initializeGesture();
+
+      this.kisaKiDiService.initStorage().then(() => {
+        console.log('Storage initialized');
+      });
+
       this.waveSurfer = WaveSurfer.create({
         container: this.waveformView.nativeElement,
         responsive: true,
@@ -86,6 +98,8 @@ export class FolderPage implements OnInit, AfterViewInit {
       });
       this.waveSurfer.on('audioprocess', () => {
         this.progress = this.waveSurfer.getCurrentTime();
+        this.canMark = !this.waves.filter(wave => wave.startTime !== this.currentWave.startTime)
+            .some(wave => wave.startTime <= this.progress && wave.endTime >= this.progress);
         const limitWave = this.waves.find((wave) =>
             this.progress >= wave.startTime &&
             this.currentWave.startTime < wave.startTime);
@@ -97,14 +111,16 @@ export class FolderPage implements OnInit, AfterViewInit {
       });
       this.waveSurfer.on('seek', (progress) => {
         const timeProgress = progress * this.duration;
-        const limitWave = this.waves.find((wave) =>
-            timeProgress > wave.startTime &&
-            this.currentWave.startTime < wave.startTime);
-        if (this.currentWave.startTime > timeProgress) {
-          this.waveSurfer.seekTo(this.currentWave.startTime / this.duration);
-        } else if (limitWave) {
-          this.waveSurfer.seekTo(limitWave.startTime / this.duration);
-        }
+        // const limitWave = this.waves.find((wave) =>
+        //     timeProgress > wave.startTime &&
+        //     this.currentWave.startTime < wave.startTime);
+        this.canMark = !this.waves.filter(wave => wave.startTime !== this.currentWave.startTime)
+            .some(wave => wave.startTime <= timeProgress && wave.endTime >= timeProgress);
+        // if (this.currentWave.startTime > timeProgress) {
+        //   this.waveSurfer.seekTo(this.currentWave.startTime / this.duration);
+        // } else if (limitWave) {
+        //   this.waveSurfer.seekTo(limitWave.startTime / this.duration);
+        // }
         this.progress = this.waveSurfer.getCurrentTime();
         this.cd.detectChanges();
       });
@@ -138,6 +154,9 @@ export class FolderPage implements OnInit, AfterViewInit {
 
   stop() {
     this.waveSurfer.stop();
+    if (this.currentWave.startTime > this.progress) {
+      this.waveSurfer.seekTo(this.currentWave.startTime / this.duration);
+    }
     this.playingCard = false;
     this.playingIndexCard = -1;
     this.waveSurfer.interact = true;
@@ -152,29 +171,49 @@ export class FolderPage implements OnInit, AfterViewInit {
 
   // Add play vertical play for it or delete
   markWave() {
+    if (!this.canMark) {
+      return;
+    }
     this.pause();
     this.currentWave.endTime = this.progress;
     this.currentWave.marked = true;
     this.currentWave.accepted = false;
     this.currentWave.rejected = false;
     this.addNewWave();
+    this.kisaKiDiService.setInStorage(this.liv, this.chapit, this.waves).then(() => {
+      console.log('Stored waves to cache');
+    });
   }
 
   private addNewWave() {
+    const beforeIndex = this.waves.findIndex((wave, index, array) => {
+      if (index < this.waves.length - 1) {
+        return wave.endTime < array[index + 1].startTime;
+      } else {
+        return wave.endTime < this.duration;
+      }
+    });
     this.currentWave = {
-      startTime: this.waves[this.waves.length - 1].endTime,
+      startTime: this.waves[beforeIndex].endTime,
       endTime: this.progress,
       marked: false,
       accepted: false,
       rejected: false,
     };
-    this.waves.push(this.currentWave);
+    this.waves.splice(beforeIndex + 1, 0, this.currentWave);
     this.cd.detectChanges();
   }
 
   buttonStylePosition() {
     return {
-      left: `calc(${this.duration === 0 ? 0 : this.progress / this.duration * 100}% - 1.5rem)`
+      left: `calc(${this.duration === 0 ? 0 : this.progress / this.duration * 100}% - 1.5rem)`,
+      opacity: this.canMark ? '1' : '.5'
+    };
+  }
+
+  waveformPosition() {
+    return {
+      left: `calc(-${this.duration === 0 ? 0 : this.progress / this.duration * 100 * 2}%  + 50%)`
     };
   }
 
@@ -194,10 +233,29 @@ export class FolderPage implements OnInit, AfterViewInit {
   }
 
   removeWave(index: number) {
-    this.waves[index].marked = false;
-    this.currentWave  = this.waves.find((wave) => !wave.marked);
-    this.waves.pop();
+    const waveToremove = this.waves[index];
+    const prevWave = index > 0 ? this.waves[index - 1] : null;
+    this.waves  = this.waves.filter((wave) => wave.marked);
+    waveToremove.marked = false;
+    this.currentWave = waveToremove;
+    this.currentWave.startTime = prevWave ? prevWave.endTime : 0;
     this.waveSurfer.seekTo(this.currentWave.startTime / this.duration);
+    this.cd.detectChanges();
+  }
+
+  async removeAll() {
+    this.currentWave = {
+      startTime: 0,
+      endTime: this.progress,
+      marked: false,
+      accepted: false,
+      rejected: false,
+    };
+    this.waves = [
+      this.currentWave
+    ];
+    await this.kisaKiDiService.removeFromStorage(this.liv, this.chapit);
+    this.stop();
     this.cd.detectChanges();
   }
 
@@ -238,7 +296,9 @@ export class FolderPage implements OnInit, AfterViewInit {
 
   anrejistre() {
     this.kisaKiDiService.anrejistre(this.liv, this.chapit, this.waves).subscribe(() => {
-      this.kisaKiDiService.presentToast('Tout bagay anrejistre.');
+      this.kisaKiDiService.removeFromStorage(this.liv, this.chapit).then(() => {
+        this.kisaKiDiService.presentToast('Tout bagay anrejistre.');
+      });
     });
   }
 
@@ -318,24 +378,30 @@ export class FolderPage implements OnInit, AfterViewInit {
     }
   }
 
-  loadWaves() {
-    this.kisaKiDiService.waves(this.liv, this.chapit).subscribe((waves: any) => {
-      if (waves.length !== 0) {
-        this.waves = waves;
-      } else {
-        this.waves = [{
-          startTime: 0,
-          endTime: 0,
-          marked: false,
-          accepted: false,
-          rejected: false,
-        }];
+  async loadWaves() {
+    let waves = await this.kisaKiDiService.waves(this.liv, this.chapit).toPromise() as Array<object>;
+    if (waves.length === 0) {
+      try {
+        waves = await this.kisaKiDiService.getFromStorage(this.liv, this.chapit);
+      } catch {
+       console.log('Failed to read from cache');
       }
-      this.currentWave = this.waves.find((wave) => !wave.marked);
-      this.waveSurfer.seekTo(this.currentWave.startTime / this.duration);
-      this.addShadowToAddButton();
-      this.cd.detectChanges();
-    });
+    }
+    if (waves && waves.length !== 0) {
+      this.waves = waves;
+    } else {
+      this.waves = [{
+        startTime: 0,
+        endTime: 0,
+        marked: false,
+        accepted: false,
+        rejected: false,
+      }];
+    }
+    this.currentWave = this.waves.find((wave) => !wave.marked);
+    this.waveSurfer.seekTo(this.currentWave.startTime / this.duration);
+    this.addShadowToAddButton();
+    this.cd.detectChanges();
   }
 
   addShadowToAddButton() {
@@ -362,7 +428,24 @@ export class FolderPage implements OnInit, AfterViewInit {
     this.cd.detectChanges();
   }
 
-  compareWithFn = (user1, user2) => {
-    return user1 && user2 ? user1.id === user2.id : user1 === user2;
+  seekTo(detail: GestureDetail) {
+    console.log(detail.deltaX, this.waveformView.nativeElement.clientWidth);
+    const timeDelta = -detail.deltaX / this.waveformView.nativeElement.clientWidth * this.duration;
+    const newProgress = this.dragTimeStart + timeDelta;
+    if (newProgress >= 0 && newProgress <= this.duration) {
+      this.waveSurfer.seekTo(newProgress / this.duration);
+    }
+  }
+
+  private initializeGesture() {
+    const gesture: Gesture = createGesture({
+      el: this.waveformView.nativeElement,
+      threshold: 0,
+      onMove: (detail) => { this.seekTo(detail); },
+      onStart: (detail) => { this.dragTimeStart = this.progress; },
+      gestureName: 'drag-seek'
+    });
+
+    gesture.enable();
   }
 }

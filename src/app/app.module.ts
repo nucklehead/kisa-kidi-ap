@@ -13,10 +13,11 @@ import {HttpClientModule} from '@angular/common/http';
 import { AngularFireModule } from '@angular/fire';
 import { AngularFireAuthModule } from '@angular/fire/auth';
 import {firebaseConfig} from '../environment';
+import {NouvoFonksyonComponent} from './modal/nouvo-fonksyon/nouvo-fonksyon.component';
 
 @NgModule({
-  declarations: [AppComponent],
-  entryComponents: [],
+  declarations: [AppComponent, NouvoFonksyonComponent],
+  entryComponents: [NouvoFonksyonComponent],
   imports: [
     BrowserModule,
     IonicModule.forRoot(),

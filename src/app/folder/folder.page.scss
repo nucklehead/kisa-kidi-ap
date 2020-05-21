@@ -53,9 +53,23 @@ ion-range.music-pointer {
 .highlighter {
   height: 16vh;
   position: absolute;
-  background-color: rgba(rgb(255, 63, 98), 0.3);
+  background-color: rgba(255, 63, 98, 0.3);
   border-right-style: solid;
   border-right-color: black;
+  border-width: 1px;
+  pointer-events: none;
+  z-index: 200;
+}
+
+.highlighter-button {
+  height: 3vh;
+  bottom: -3vh;
+  position: absolute;
+  background-color: rgb(255, 63, 98);
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  border-radius: 1rem;
   z-index: 200;
 }
 
@@ -68,8 +82,9 @@ ion-range.music-pointer {
 
 .waveform {
   height: 17vh;
-  margin-left: 1.5rem;
-  margin-right: 1.5rem;
+  //margin-left: 1.5rem;
+  //margin-right: 1.5rem;
+  width: 200%;
   position: relative;
 }
 

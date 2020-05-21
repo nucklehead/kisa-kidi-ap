@@ -3,7 +3,6 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>{{ liv }} {{ chapit }}</ion-title>
     <ion-select *ngIf="kisaKiDiService.admin" placeholder="Itilizatè" [(ngModel)]="kisaKiDiService.selectedUid" (ionChange)="loadWaves()">
       <ion-select-option *ngFor="let user of (usersAsync | async);" [value]="user.uid">{{user.name}}</ion-select-option>
     </ion-select>
@@ -17,20 +16,24 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
+  <ion-item>
     <ion-toolbar>
+      <ion-button size="small" color="tertiary" slot="end" (click)="removeAll()">
+        <ion-icon name="refresh-circle"></ion-icon>
+      </ion-button>
       <ion-title size="large center">{{ liv }} {{ chapit }}</ion-title>
       <ion-button *ngIf="kisaKiDiService.admin" size="small" color="success" slot="end" (click)="acceptAll()">
         <ion-icon name="checkmark-circle"></ion-icon>
       </ion-button>
     </ion-toolbar>
-  </ion-header>
+  </ion-item>
 
-  <div class="waveform" #waveform>
+  <div class="waveform" [ngStyle]="waveformPosition()" #waveform>
     <div *ngIf="!ready;">
       <ion-skeleton-text animated style="width: 100%; height: 100%; position: absolute;"></ion-skeleton-text>
     </div>
-    <div *ngFor="let wave of waves; let i = index;" class="highlighter" [ngStyle]="highlighterStyle(wave)" (click)="waveOptions(i)"></div>
+    <div *ngFor="let wave of waves; let i = index;" class="highlighter" [ngStyle]="highlighterStyle(wave)"></div>
+    <div *ngFor="let wave of waves; let i = index;" class="highlighter-button" [ngStyle]="highlighterStyle(wave)" (click)="waveOptions(i)"></div>
     <ion-icon *ngIf="waves.length > 0" name="add-circle" color="primary" class="add-button" [ngStyle]="buttonStylePosition()" (click)="markWave()" #addButton></ion-icon>
   </div>
 

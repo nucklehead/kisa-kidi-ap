@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {KisaKiDiService} from '../api/kisa-ki-di.service';
+import {NouvoFonksyonComponent} from '../modal/nouvo-fonksyon/nouvo-fonksyon.component';
 
 @Component({
   selector: 'app-login',

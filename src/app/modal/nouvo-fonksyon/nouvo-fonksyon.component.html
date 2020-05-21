@@ -1,0 +1,15 @@
+<ion-content scroll-y="false" fullscreen>
+  <ion-slides pager="true">
+    <ion-slide *ngFor="let fonksyon of fonksyonYo; let i = index;">
+      <div class="slide" style="height: 95vh">
+        <h1>Nouvo bagay!</h1>
+        <img [src]="'assets/gif/' + fonksyon.image" style="width: 40%"/>
+        <ion-text color="tertiary">
+          <h3>{{ fonksyon.title }}</h3>
+        </ion-text>
+        <div *ngFor="let text of fonksyon.texts">{{ text }}</div>
+        <ion-button color="primary" slot="middle" style="border: 0" [disabled]="i < fonksyonYo.length - 1" (click)="makeFonksyon()">DAKÒ</ion-button>
+      </div>
+    </ion-slide>
+  </ion-slides>
+</ion-content>
