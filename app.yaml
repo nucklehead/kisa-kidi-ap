@@ -11,6 +11,6 @@ handlers:
     static_files: www/index.html
     upload: www/index.html
 
-  - url: /kisa-ki-di/(.*\.(js|png|svg|css))$
+  - url: /kisa-ki-di/(.*\.(js|png|svg|css|gif))$
     static_files: www/\1
     upload: www/(.*)
